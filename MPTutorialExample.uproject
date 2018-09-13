@@ -1,0 +1,13 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{A73E16F7-4EF6-C046-24DF-44A30B2F5500}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "MPTutorialExample",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

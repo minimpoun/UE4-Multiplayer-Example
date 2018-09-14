@@ -24,6 +24,9 @@ Planned Features:
 - [ ] Base Weapon class for example hit-scan weapons
 - [ ] Full Steam Integration
 - [ ] Example UMG Game HUD
+- [ ] Directional Hitmarkers
+- [ ] Static Crosshair
+- [ ] Crosshair Variants for Different Guns
 - [ ] Pre and Post Game Lobby
 - [ ] Scoreboard and VIP screen
 - [ ] Map Voting System
@@ -39,5 +42,6 @@ Possible Features:
 - [ ] Bone-Base Damage including Sound Effects for Headshots
 - [ ] Muting System to allow you to mute other players.
 - [ ] Server Admin Controls.
+- [ ] Dynamic Crosshair
 
 If you use this, all I ask is that you credit me and Gameplay.Solutions somewhere in your project.

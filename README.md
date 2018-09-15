@@ -16,7 +16,7 @@ Planned Features:
 - [ ] Skill-Based Matchmaking
 - [ ] Main Menu
 - [ ] Settings Menu with Graphics, and Input Settings
-- [ ] Network Reply Functionality
+- [ ] Network Replay Functionality
 - [ ] Team Deathmatch Gamemode
 - [ ] Capture the Flag Gamemode
 - [ ] Free-for-All Gamemode

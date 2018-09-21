@@ -12,6 +12,7 @@ Planned Features:
 - [ ] Server browser
 - [x] Hosting Listen Servers
 - [x] Host Dedicated Servers
+- [x] Join Servers via Session ID/Index
 - [ ] Join Servers via Friend Invite
 - [ ] Skill-Based Matchmaking
 - [ ] Main Menu

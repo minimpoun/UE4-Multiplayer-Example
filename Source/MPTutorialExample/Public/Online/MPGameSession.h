@@ -8,7 +8,7 @@
 
 #define SETTING_SERVER_NAME FName(TEXT("SERVERNAME"))
 
-class AMPTutorialExampleGameMode;
+class AMPBaseGameMode;
 class FMPOnlineSessionSearch;
 class FMPOnlineSessionSettings;
 
@@ -142,12 +142,15 @@ class AMPGameSession : public AGameSession
 	FOnJoinSessionComplete OnJoinSessionCompleteEvent;
 
 	DECLARE_EVENT_OneParam(ThisClass, FOnFindSessionsComplete, bool);
-	FOnFindSessionsComplete FindSessionsCompleteEvent;
+	FOnFindSessionsComplete OnFindSessionsCompleteEvent;
+
+	DECLARE_EVENT_TwoParams(ThisClass, FOnCreateSessionComplete, FName, bool);
+	FOnCreateSessionComplete OnCreateSessionCompleteEvent;
 
 public:
 
 	AMPGameSession();
-	virtual ~AMPGameSession();
+	virtual ~AMPGameSession(){}
 
 	void RequestSafeShutdown(int32 ExitCode);
 	
@@ -155,17 +158,18 @@ public:
 	void CancelMatchmaking();
 	int32 GetBestSession();
 
-	bool HostSession(TSharedPtr<const FUniqueNetId>& UserID, FName SessionName, const FString& Gamemode, const FString& Map, bool bIsLAN, bool bIsPresence, bool bAllowJoinInProgress, int32 MaxPlayers);
+	bool HostSession(TSharedPtr<const FUniqueNetId> UserID, FName SessionName, const FString& Gamemode, const FString& Map, bool bIsLAN, bool bIsPresence, bool bAllowJoinInProgress, int32 MaxPlayers);
+	void FindSessions(TSharedPtr<const FUniqueNetId> UserID, FName SessionName, bool bIsLAN, bool bIsPresence, bool bSearchDedicatedOnly = true, bool bSearchCustomGames = false);
 	bool JoinSession(TSharedPtr<const FUniqueNetId> UserID, FName SessionName, int32 SessionIndex);
 	bool JoinSession(TSharedPtr<const FUniqueNetId> UserID, FName SessionName, const FOnlineSessionSearchResult& SearchResult);
-	void FindSessions(TSharedPtr<const FUniqueNetId>& UserID, FName SessionName, bool bIsLAN, bool bIsPresence, bool bSearchDedicatedOnly = true, bool bSearchCustomGames = false);
-	FOnFindSessionsComplete& OnFindSessionsComplete() { return FindSessionsCompleteEvent; }
+	FOnFindSessionsComplete& OnFindSessionsComplete() { return OnFindSessionsCompleteEvent; }
 	FOnJoinSessionComplete& OnJoinSessionsComplete() { return OnJoinSessionCompleteEvent; }
+	FOnCreateSessionComplete& OnCreateListenServerComplete() { return OnCreateSessionCompleteEvent; }
 
 	UFUNCTION(BlueprintPure)
 	bool CheckForAsyncInProgress() const;
 
-	EOnlineAsyncTaskState::Type GetSearchResultState(int32& SearchIndex, int32& NumResults);
+	EOnlineAsyncTaskState::Type GetSearchResultState(int32& SearchIndex, int32& NumResults) const;
 
 	FORCEINLINE const TArray<FMPSearchResult>& GetAllSearchResults() const;
 
@@ -173,7 +177,7 @@ protected:
 
 	TArray<FMPSearchResult> SearchResults;
 
-	FORCEINLINE AMPTutorialExampleGameMode* GetBaseGM() const { return BaseGM; }
+	FORCEINLINE AMPBaseGameMode* GetBaseGM() const { return BaseGM; }
 
 	void ContinueMatchmaking();
 	void ResetSessionIndex();
@@ -187,7 +191,8 @@ protected:
 	FOnStartSessionCompleteDelegate OnStartSessionCompleteDelegate;
 	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
 	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
-	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
+	FOnFindFriendSessionCompleteDelegate OnFindFriendSessionCompleteDelegate;
+	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate; 
 	FOnUpdateSessionCompleteDelegate OnUpdateSessionCompleteDelegate;
 	FOnMatchmakingCompleteDelegate OnMatchmakingCompleteDelegate;
 	FOnCancelMatchmakingCompleteDelegate OnCancelMatchmakingCompleteDelegate;
@@ -196,6 +201,7 @@ protected:
 	FDelegateHandle OnStartSessionCompleteDelegateHandle;
 	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
 	FDelegateHandle OnFindSessionsCompleteDelegateHandle;
+	FDelegateHandle OnFindFriendSessionCompleteHandle;
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
 	FDelegateHandle OnUpdateSessionCompleteDelegateHandle;
 	FDelegateHandle OnMatchmakingCompleteDelegateHandle;
@@ -212,7 +218,16 @@ protected:
 	virtual void Destroyed() override;
 	/* End AActor Interface */
 
+	/** 
+	 *	Starts a dedicated server session 
+	 **/
 	virtual void StartServer();
+	virtual void EndServer() PURE_VIRTUAL(, );
+
+	/** 
+	 *	Runs right before the server session starts.
+	 *	Gives code time to set anything up or run commands that can only be done before the server session is running
+	 **/
 	virtual void DefferedStartServerLogic();
 
 	/* Being Delegate Functions */
@@ -220,10 +235,8 @@ protected:
 	virtual void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 	virtual void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 	virtual void OnFindSessionsComplete(bool bWasSuccessful);
+	virtual void OnFindFriendSessionsComplete(int32 ControllerID, bool bSuccessful, const TArray<FOnlineSessionSearchResult>& SearchResults);
 	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-	virtual void OnUpdateSessionComplete(FName SessionName, bool bWasSuccessful);
-	virtual void OnMatchmakingComplete(FName SessionName, bool bWasSuccessful);
-	virtual void OnCancelMatchmakingComplete(FName SessionName, bool bWasSuccessful);
 	virtual void OnNoMatchFound();
 	/* End Delegate Functions */
 
@@ -240,6 +253,6 @@ protected:
 
 private:
 
-	AMPTutorialExampleGameMode* BaseGM;
+	AMPBaseGameMode* BaseGM;
 
 };

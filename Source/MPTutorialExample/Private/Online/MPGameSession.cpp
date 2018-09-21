@@ -1,7 +1,7 @@
 #include "MPGameSession.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
-#include "MPTutorialExampleGameMode.h"
+#include "MPBaseGameMode.h"
 #include "MPController.h"
 #include "OnlineSubsystemSessionSettings.h"
 #include "Kismet/GameplayStatics.h"
@@ -20,17 +20,9 @@ AMPGameSession::AMPGameSession()
 		OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject(this, &ThisClass::OnDestroySessionComplete);
 		OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsComplete);
 		OnJoinSessionCompleteDelegate = FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionComplete);
-		OnUpdateSessionCompleteDelegate = FOnUpdateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnUpdateSessionComplete);
-		OnMatchmakingCompleteDelegate = FOnMatchmakingCompleteDelegate::CreateUObject(this, &ThisClass::OnMatchmakingComplete);
-		OnCancelMatchmakingCompleteDelegate = FOnCancelMatchmakingCompleteDelegate::CreateUObject(this, &ThisClass::OnCancelMatchmakingComplete);
 	}
 
 	MaxPlayers_Dedicated = 16;
-}
-
-AMPGameSession::~AMPGameSession()
-{
-
 }
 
 void AMPGameSession::RequestSafeShutdown(int32 ExitCode)
@@ -69,7 +61,7 @@ int32 AMPGameSession::GetBestSession()
 	return NULL;
 }
 
-bool AMPGameSession::HostSession(TSharedPtr<const FUniqueNetId>& UserID, FName SessionName, const FString& Gamemode, const FString& Map, bool bIsLAN, bool bIsPresence, bool bAllowJoinInProgress, int32 MaxPlayers)
+bool AMPGameSession::HostSession(TSharedPtr<const FUniqueNetId> UserID, FName SessionName, const FString& Gamemode, const FString& Map, bool bIsLAN, bool bIsPresence, bool bAllowJoinInProgress, int32 MaxPlayers)
 {
 	IOnlineSubsystem* _Subsystem = IOnlineSubsystem::Get();
 	if (_Subsystem)
@@ -92,6 +84,14 @@ bool AMPGameSession::HostSession(TSharedPtr<const FUniqueNetId>& UserID, FName S
 			OnCreateSessionCompleteDelegateHandle = _Session->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
 			return _Session->CreateSession(*UserID, CurrentSession.SessionName, *HostSettings);
 		}
+	}
+	else
+	{
+#if !UE_BUILD_SHIPPING
+
+		OnCreateListenServerComplete().Broadcast(NAME_GameSession, true);
+
+#endif
 	}
 
 	return false;
@@ -127,7 +127,7 @@ bool AMPGameSession::JoinSession(TSharedPtr<const FUniqueNetId> UserID, FName Se
 	return _bSuccess;
 }
 
-void AMPGameSession::FindSessions(TSharedPtr<const FUniqueNetId>& UserID, FName SessionName, bool bIsLAN, bool bIsPresence, bool bSearchDedicatedOnly, bool bSearchCustomGames)
+void AMPGameSession::FindSessions(TSharedPtr<const FUniqueNetId> UserID, FName SessionName, bool bIsLAN, bool bIsPresence, bool bSearchDedicatedOnly, bool bSearchCustomGames)
 {
 	if (bSearchCustomGames && bSearchDedicatedOnly)
 	{
@@ -184,7 +184,7 @@ bool AMPGameSession::CheckForAsyncInProgress() const
 	return false;
 }
 
-EOnlineAsyncTaskState::Type AMPGameSession::GetSearchResultState(int32& _SearchIndex, int32& _NumResults)
+EOnlineAsyncTaskState::Type AMPGameSession::GetSearchResultState(int32& _SearchIndex, int32& _NumResults) const
 {
 	_NumResults = 0;
 	_SearchIndex = 0;
@@ -215,10 +215,63 @@ void AMPGameSession::ResetSessionIndex()
 
 void AMPGameSession::CleanupOnlineSubsystem()
 { 
-
+	SearchResults.Empty();
+	SearchSettings = nullptr;
+	HostSettings = nullptr;
+	ResetSessionIndex();
 }
 
 void AMPGameSession::RegisterServer()
+{
+	DefferedStartServerLogic();
+	StartServer();
+}
+
+void AMPGameSession::Restart()
+{
+
+}
+
+void AMPGameSession::HandleMatchHasStarted()
+{
+	IOnlineSubsystem* _Subsystem = IOnlineSubsystem::Get();
+	if (_Subsystem)
+	{
+		IOnlineSessionPtr _Session = _Subsystem->GetSessionInterface();
+		if (_Session.IsValid() && _Session->GetNamedSession(NAME_GameSession))
+		{
+			OnStartSessionCompleteDelegateHandle = _Session->AddOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegate);
+			_Session->StartSession(NAME_GameSession);
+		}
+	}
+}
+
+void AMPGameSession::HandleMatchHasEnded()
+{
+	IOnlineSubsystem* _Subsystem = IOnlineSubsystem::Get();
+	if (_Subsystem)
+	{
+		IOnlineSessionPtr _Session = _Subsystem->GetSessionInterface();
+		if (_Session.IsValid() && _Session->GetNamedSession(NAME_GameSession))
+		{
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+			{
+				auto* _Controller = Cast<AMPController>(*It);
+				if (_Controller && !_Controller->IsLocalController())
+				{
+					_Controller->ClientEndGame();
+				}
+			}
+		}
+	}
+}
+
+void AMPGameSession::Destroyed()
+{
+
+}
+
+void AMPGameSession::StartServer()
 {
 	IOnlineSubsystem* _Subsystem = IOnlineSubsystem::Get();
 	if (_Subsystem)
@@ -241,31 +294,6 @@ void AMPGameSession::RegisterServer()
 	}
 }
 
-void AMPGameSession::Restart()
-{
-
-}
-
-void AMPGameSession::HandleMatchHasStarted()
-{
-
-}
-
-void AMPGameSession::HandleMatchHasEnded()
-{
-
-}
-
-void AMPGameSession::Destroyed()
-{
-
-}
-
-void AMPGameSession::StartServer()
-{
-
-}
-
 void AMPGameSession::DefferedStartServerLogic()
 {
 
@@ -282,6 +310,8 @@ void AMPGameSession::OnCreateSessionComplete(FName SessionName, bool bWasSuccess
 			_Session->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
 		}
 	}
+	
+	OnCreateListenServerComplete().Broadcast(NAME_GameSession, bWasSuccessful);
 }
 
 void AMPGameSession::OnStartSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -301,7 +331,7 @@ void AMPGameSession::OnStartSessionComplete(FName SessionName, bool bWasSuccessf
 					AMPController* _Controller = Cast<AMPController>(*It);
 					if (_Controller && !_Controller->IsLocalController())
 					{
-
+						_Controller->ClientStartGame();
 					}
 				}
 			}
@@ -351,6 +381,11 @@ void AMPGameSession::OnFindSessionsComplete(bool bWasSuccessful)
 	}
 }
 
+void AMPGameSession::OnFindFriendSessionsComplete(int32 ControllerID, bool bSuccessful, const TArray<FOnlineSessionSearchResult>& SearchResults)
+{
+	
+}
+
 void AMPGameSession::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
 	FString _URL;
@@ -366,21 +401,6 @@ void AMPGameSession::OnJoinSessionComplete(FName SessionName, EOnJoinSessionComp
 	}
 
 	OnFindSessionsComplete().Broadcast(Result);
-}
-
-void AMPGameSession::OnUpdateSessionComplete(FName SessionName, bool bWasSuccessful)
-{
-
-}
-
-void AMPGameSession::OnMatchmakingComplete(FName SessionName, bool bWasSuccessful)
-{
-
-}
-
-void AMPGameSession::OnCancelMatchmakingComplete(FName SessionName, bool bWasSuccessful)
-{
-
 }
 
 void AMPGameSession::OnNoMatchFound()

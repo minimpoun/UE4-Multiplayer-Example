@@ -45,6 +45,6 @@ Possible Features:
 - [ ] Bone-Base Damage including Sound Effects for Headshots
 - [ ] Muting System to allow you to mute other players.
 - [ ] Server Admin Controls.
-- [ ] Dynamic Crosshair
+- [x] Dynamic Crosshair
 
 If you use this, all I ask is that you credit me and Gameplay.Solutions somewhere in your project.

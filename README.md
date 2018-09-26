@@ -24,11 +24,14 @@ Planned Features:
 - [ ] Team Manager with auto-balancing Teams
 - [ ] Slot Based Inventory System
 - [ ] Loadout System
-- [ ] Base Weapon class for example hit-scan weapons
+- [ ] Base Weapon class
+- [ ] Projectile Weapons
+- [ ] Hit-Scan Weapons
 - [ ] Full Steam Integration
 - [ ] Example UMG Game HUD
 - [ ] Directional Hitmarkers
-- [ ] Static Crosshair
+- [x] Static Crosshair
+- [x] Dynamic Crosshair
 - [ ] Crosshair Variants for Different Guns
 - [ ] Pre and Post Game Lobby
 - [ ] Scoreboard and VIP screen
@@ -38,13 +41,11 @@ Planned Features:
 - [ ] Voice Chat
 
 Possible Features:
-- [ ] Projectile Weapons
 - [ ] AI Bots
 - [ ] Vehicles
 - [ ] Game Music Manager
 - [ ] Bone-Base Damage including Sound Effects for Headshots
 - [ ] Muting System to allow you to mute other players.
 - [ ] Server Admin Controls.
-- [x] Dynamic Crosshair
 
 If you use this, all I ask is that you credit me and Gameplay.Solutions somewhere in your project.

@@ -22,6 +22,8 @@ Planned Features:
 - [ ] Capture the Flag Gamemode
 - [ ] Free-for-All Gamemode
 - [ ] Team Manager with auto-balancing Teams
+- [ ] Slot Based Inventory System
+- [ ] Loadout System
 - [ ] Base Weapon class for example hit-scan weapons
 - [ ] Full Steam Integration
 - [ ] Example UMG Game HUD

@@ -1,3 +1,4 @@
+![Gameplay Solutions Logo](http://gameplay.solutions/wp-content/uploads/2017/11/GSLogo_large-300x169.png)
 # UE4 Multiplayer Example is a Open-Source example of how to create multiplayer games using UE4 C++
 The goal of this project is to show off my skills in Network Programming with UE4, as well as give the community 
 an excellent example of how to create a multiplayer game. I know Epic has released things like this of their own,
